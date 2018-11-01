@@ -4,7 +4,7 @@
 
   <!-- acquisition.lauynch -->
   <arg name="binning"		    default="2"	doc="Binning for cameras, when changing from 2 to 1 cameras need to be unplugged and replugged"/>
-  <arg name="color"		        default="false"	doc="Should color images be used (only works on models that support color images)"/>
+  <arg name="color"		        default="true"	doc="Should color images be used (only works on models that support color images)"/>
   <arg name="exp"               default="0"	doc="Exposure setting for cameras"/>
   <arg name="frames"            default="3400"	doc="Numer of frames to save/view 0=ON"/>
   <arg name="live"              default="false"	doc="Show images on screen GUI"/>
@@ -18,11 +18,11 @@
   <arg name="to_ros"            default="true"	doc="Flag whether images should be published to ROS" />
   <arg name="utstamps"          default="false"	doc="Flag whether each image should have Unique timestamps vs the master cams time stamp for all" />
   <arg name="max_rate_save"     default="false"	doc="Flag for max rate mode which is when the master triggerst the slaves and saves images at maximum rate possible" />
-  <arg name="config_file"       default="$(find spinnaker_sdk_camera_driver)/params/test_params.yaml" doc="File specifying the parameters of the camera_array"/>
+  <arg name="config_file"       default="$(find spinnaker_sdk_camera_driver)/params/blackfly_params.yaml" doc="File specifying the parameters of the camera_array"/>
 
   <!-- load the acquisition node -->
-  <node pkg="spinnaker_sdk_camera_driver" type="acquisition_node" name="acquisition_node" output="$(arg output)"
-	args="">
+	<?ignore launch-prefix="gdb -ex run --args" ?>
+  <node pkg="spinnaker_sdk_camera_driver" type="acquisition_node" name="acquisition_node" output="$(arg output)" args="" >
 
     <!-- load the acquisition node parameters file.  Note any parameters provided in this file will 
 	 override what is in the yaml file.  Thus use it to set parameters camer_array configuration params -->
