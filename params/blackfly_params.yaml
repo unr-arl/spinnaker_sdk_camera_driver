@@ -2,17 +2,13 @@ cam_ids:
 - 18383942
 cam_aliases:
 - blackfly
-skip:            20
-delay:           0
-master_cam:      18383942
-# Assign all the follwing via launch file to prevent confusion and conflict
-
-#save_path:      ~/projects/data
-#save_type:      .bmp #binary or .tiff or .bmp
-#binning:        1 # going from 2 to 1 requires cameras to be unplugged and replugged
-color:           true
-reverse_y:       true
-#frames:         50
-#soft_framerate: 4 # this frame rate reflects to the software frame rate set using ros::rate
-#exp:            997
-#to_ros:         true  #When to_ros is not selected, but live is selected, pressing 'space' exports single image to ROS
+master_cam: 18383942
+# Camera info
+image_width: 720
+image_height: 540
+distortion_model: plumb_bob
+distortion_coeffs:
+- [-0.3889624348377925, 0.13165647665898883, -0.00045030892553047665, -0.0008754457994836001]
+# Specified as [fx  0 cx 0 fy cy 0  0  1]
+intrinsic_coeffs:
+- [573.9404448820071, 0.0, 351.50516631518883, 0.0, 575.4924117307437, 266.7691215587409, 0.0, 0.0, 1.0]

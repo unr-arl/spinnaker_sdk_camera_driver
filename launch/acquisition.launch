@@ -2,9 +2,9 @@
   <!-- configure console output verbosity mode:debug_console.conf or std_console.conf -->
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find spinnaker_sdk_camera_driver)/cfg/std_console.conf"/>
 
-  <!-- acquisition.lauynch -->
+  <!-- acquisition.launch -->
   <arg name="binning" default="2" doc="Binning for cameras, when changing from 2 to 1 cameras need to be unplugged and replugged"/>
-  <arg name="color" default="true" doc="Should color images be used (only works on models that support color images)"/>
+  <arg name="color" default="false" doc="Should color images be used (only works on models that support color images)"/>
   <arg name="exp" default="0" doc="Exposure setting for cameras"/>
   <arg name="reverse_x" default="false" doc="flip vertically"/>
   <arg name="reverse_y" default="false" doc="flip horizontally"/>
@@ -24,7 +24,7 @@
 
   <!-- load the acquisition node -->
   <?ignore launch-prefix="gdb -ex run --args" ?>
-  <node pkg="spinnaker_sdk_camera_driver" type="acquisition_node" name="acquisition_node" output="$(arg output)" args="">
+  <node pkg="spinnaker_sdk_camera_driver" type="acquisition_node" name="acquisition_node" output="$(arg output)" args="" >
 
     <!-- load the acquisition node parameters file. Note any parameters provided in this file will override what is in the yaml file. Thus use it to set parameters camer_array configuration params -->
     <rosparam command="load" file="$(arg config_file)"/>
