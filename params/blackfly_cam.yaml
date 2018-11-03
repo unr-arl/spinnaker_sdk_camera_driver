@@ -1,0 +1,20 @@
+image_width: 720
+image_height: 540
+camera_name: camera_array/blackfly/image_raw
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [573.9404448820071, 0, 351.50516631518883, 0, 575.4924117307437, 266.7691215587409, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.3889624348377925, 0.13165647665898883, -0.00045030892553047665, -0.0008754457994836001, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+data: [573.9404448820071, 0, 351.50516631518883, 0, 0, 575.4924117307437, 266.7691215587409, 0, 0, 0, 1, 0]
