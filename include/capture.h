@@ -130,6 +130,9 @@ private:
   vector<sensor_msgs::CameraInfo> cam_info_msgs;
   spinnaker_sdk_camera_driver::spinnaker_image_names mesg;
 
+	int image_width_;
+	int image_height_;
+	string distortion_model_;
   boost::mutex queue_mutex_;
 };
 }

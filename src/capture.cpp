@@ -1,5 +1,8 @@
 #include "capture.h"
 
+// Replace ROS_ASSERT_MSG
+#define STOP_IF_FALSE(cond, msg) {if(!(cond)) ROS_FATAL(msg);}
+
 acquisition::Capture::~Capture() {
 
   // destructor
@@ -126,7 +129,7 @@ void acquisition::Capture::load_cameras() {
   camList_ = system_->GetCameras();
 
   numCameras_ = camList_.GetSize();
-  ROS_ASSERT_MSG(numCameras_, "No cameras found!");
+  STOP_IF_FALSE(numCameras_, "No cameras found!");
   ROS_INFO_STREAM("Numer of cameras found: " << numCameras_);
   ROS_INFO_STREAM(" Cameras connected: " << numCameras_);
 
@@ -169,12 +172,12 @@ void acquisition::Capture::load_cameras() {
         if (PUBLISH_CAM_INFO_) {
           sensor_msgs::CameraInfo ci_msg;
 
-          ci_msg.height = 1024;
-          ci_msg.width = 1280;
-          ci_msg.distortion_model = "plumb_bob";
+          ci_msg.height = image_height_;
+          ci_msg.width = image_width_;
+          ci_msg.distortion_model = distortion_model_;
           ci_msg.D = distortion_coeff_vec_[j];
-          ci_msg.binning_x = binning_;
-          ci_msg.binning_y = binning_;
+          ci_msg.binning_x = 1; //binning_; @TUNG: assume the calibration for this resolution
+          ci_msg.binning_y = 1; //binning_;
           for (int count = 0; count < intrinsic_coeff_vec_[j].size(); count++)
             ci_msg.K[count] = intrinsic_coeff_vec_[j][count];
           ci_msg.header.frame_id = "cam_" + to_string(j) + "_optical_frame";
@@ -202,9 +205,9 @@ void acquisition::Capture::load_cameras() {
     ROS_WARN("Could not find all cameras listed in the yaml file");
     ros::shutdown();
   }
-  ROS_ASSERT_MSG(cams.size(),
+  STOP_IF_FALSE(cams.size(),
                  "None of the connected cameras are in the config list!");
-  ROS_ASSERT_MSG(master_set,
+  STOP_IF_FALSE(master_set,
                  "The camera supposed to be the master isn't connected!");
 }
 
@@ -237,14 +240,14 @@ void acquisition::Capture::read_parameters() {
     path_ = path_ + '/';
 
   struct stat sb;
-  ROS_ASSERT_MSG(stat(path_.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode),
+  STOP_IF_FALSE(stat(path_.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode),
                  "Specified Path Doesn't Exist!!!");
 
   ROS_INFO("  Camera IDs:");
 
   std::vector<int> cam_id_vec;
-  if (nh_pvt_.getParam("cam_ids", cam_id_vec))
-    ROS_INFO("If cam_aliases are provided, they should be the same number as "
+  if (!nh_pvt_.getParam("cam_ids", cam_id_vec))
+    ROS_WARN("If cam_aliases are provided, they should be the same number as "
              "cam_ids and should correspond in order!");
   int num_ids = cam_id_vec.size();
   for (int i = 0; i < num_ids; i++) {
@@ -255,7 +258,7 @@ void acquisition::Capture::read_parameters() {
   std::vector<string> cam_alias_vec;
   if (nh_pvt_.getParam("cam_aliases", cam_names_)) {
     ROS_INFO_STREAM("  Camera Aliases:");
-    ROS_ASSERT_MSG(num_ids == cam_names_.size(),
+    STOP_IF_FALSE(num_ids == cam_names_.size(),
                    "If cam_aliases are provided, they should be the same "
                    "number as cam_ids and should correspond in order!");
     for (int i = 0; i < cam_names_.size(); i++) {
@@ -277,7 +280,7 @@ void acquisition::Capture::read_parameters() {
     if (master_cam_id_.compare(cam_ids_[i]) == 0)
       found = true;
   }
-  ROS_ASSERT_MSG(found, "Specified master cam is not in the cam_ids list!");
+  STOP_IF_FALSE(found, "Specified master cam is not in the cam_ids list!");
 
   if (nh_pvt_.getParam("utstamps", MASTER_TIMESTAMP_FOR_ALL_)) {
     MASTER_TIMESTAMP_FOR_ALL_ = !MASTER_TIMESTAMP_FOR_ALL_;
@@ -296,13 +299,13 @@ void acquisition::Capture::read_parameters() {
 
   reverse_x_ = false;
   if (nh_pvt_.getParam("reverse_x", reverse_x_))
-    ROS_INFO(" Reverse X: ", reverse_x_);
+    ROS_INFO(" Reverse X: %s", (reverse_x_)?"True":"False");
   else
     ROS_WARN("'reverse_x' is not set");
 
   reverse_y_ = false;
   if (nh_pvt_.getParam("reverse_y", reverse_y_))
-    ROS_INFO(" Reverse Y: ", reverse_y_);
+    ROS_INFO(" Reverse Y: %s", (reverse_y_)?"True":"False");
   else
     ROS_WARN("'reverse_y' is not set");
 
@@ -442,18 +445,32 @@ void acquisition::Capture::read_parameters() {
                "will be recorded until user termination");
   }
 
+  image_width_ = 0;
+	if (nh_pvt_.getParam("image_width", image_width_)) {
+    ROS_INFO_STREAM("  Image width: " << image_width_);
+  }
+
+  image_height_ = 0;
+	if (nh_pvt_.getParam("image_height", image_height_)) {
+    ROS_INFO_STREAM("  Image width: " << image_width_);
+  }
+
+  distortion_model_ = "plumb_bob";
+	if (nh_pvt_.getParam("distortion_model", distortion_model_)) {
+    ROS_INFO_STREAM("  Image model: " << distortion_model_);
+  }
+
   bool intrinsics_list_provided = false;
   XmlRpc::XmlRpcValue intrinsics_list;
   if (nh_pvt_.getParam("intrinsic_coeffs", intrinsics_list)) {
-    ROS_INFO("  Camera Intrinsic Paramters:");
-    ROS_ASSERT_MSG(intrinsics_list.size() == num_ids,
-                   "If intrinsic_coeffs are provided, they should be the same "
+    ROS_INFO_STREAM("  Camera Intrinsic Paramters: " << intrinsics_list.size() << " num_ids" << num_ids);
+    STOP_IF_FALSE(intrinsics_list.size() == num_ids, "If intrinsic_coeffs are provided, they should be the same "
                    "number as cam_ids and should correspond in order!");
     for (int i = 0; i < intrinsics_list.size(); i++) {
       std::vector<double> intrinsics;
       String intrinsics_str = "";
       for (int j = 0; j < intrinsics_list[i].size(); j++) {
-        ROS_ASSERT_MSG(
+        STOP_IF_FALSE(
             intrinsics_list[i][j].getType() == XmlRpc::XmlRpcValue::TypeDouble,
             "Make sure all numbers are entered as doubles eg. 0.0 or 1.1");
         intrinsics.push_back(static_cast<double>(intrinsics_list[i][j]));
@@ -470,14 +487,14 @@ void acquisition::Capture::read_parameters() {
 
   if (nh_pvt_.getParam("distortion_coeffs", distort_list)) {
     ROS_INFO("  Camera Distortion Paramters:");
-    ROS_ASSERT_MSG(distort_list.size() == num_ids,
+    STOP_IF_FALSE(distort_list.size() == num_ids,
                    "If intrinsic_coeffs are provided, they should be the same "
                    "number as cam_ids and should correspond in order!");
     for (int i = 0; i < distort_list.size(); i++) {
       std::vector<double> distort;
       String distort_str = "";
       for (int j = 0; j < distort_list[i].size(); j++) {
-        ROS_ASSERT_MSG(
+        STOP_IF_FALSE(
             distort_list[i][j].getType() == XmlRpc::XmlRpcValue::TypeDouble,
             "Make sure all numbers are entered as doubles eg. 0.0 or 1.1");
         distort.push_back(static_cast<double>(distort_list[i][j]));
@@ -489,7 +506,7 @@ void acquisition::Capture::read_parameters() {
     }
   }
 
-  PUBLISH_CAM_INFO_ = intrinsics_list_provided && distort_list_provided;
+  PUBLISH_CAM_INFO_ = (image_width_ > 0) && (image_height_ > 0) && intrinsics_list_provided && distort_list_provided;
   if (PUBLISH_CAM_INFO_)
     ROS_INFO(
         "  Camera coeffs provided, camera info messges will be published.");
@@ -497,7 +514,7 @@ void acquisition::Capture::read_parameters() {
     ROS_INFO("  Camera coeffs not provided correctly, camera info messges will "
              "not be published.");
 
-  //    ROS_ASSERT_MSG(my_list.getType()
+  //    STOP_IF_FALSE(my_list.getType()
   //    int num_ids = cam_id_vec.size();
   //    for (int i=0; i < num_ids; i++){
   //        cam_ids_.push_back(to_string(cam_id_vec[i]));
@@ -710,7 +727,6 @@ void acquisition::Capture::export_to_ROS() {
     }
   }
   export_to_ROS_time_ = ros::Time::now().toSec() - t;
-  ;
 }
 
 void acquisition::Capture::save_binary_frames(int dump) {
