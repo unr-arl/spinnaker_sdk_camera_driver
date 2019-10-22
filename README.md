@@ -1,3 +1,5 @@
+# [Deprecated in favor of https://github.com/unr-arl/flir_camera_driver]
+
 # spinnaker_camera_driver
 
 These are the ros drivers for running the Pt Grey (FLIR) cameras that use the Spinnaker SDK.  This code has been tested with various Point Grey Blackfly S (BFS) cameras. 
